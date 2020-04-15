@@ -1,16 +1,13 @@
 -- Copyright (C) 2017 yushi studio <ywb94@qq.com> github.com/ywb94
 -- Copyright (C) 2018 lean <coolsnowwolf@gmail.com> github.com/coolsnowwolf
 -- Licensed to the public under the GNU General Public License v3.
-
+require "luci.model.uci"
 local m, s, sec, o, kcp_enable
 local shadowsocksr = "shadowsocksr"
 local uci = luci.model.uci.cursor()
 
-local sys = require "luci.sys"
-
 m = Map(shadowsocksr, translate("ShadowSocksR Plus+ Settings"))
-
-m:section(SimpleSection).template  = "shadowsocksr/status"
+m:section(SimpleSection).template = "shadowsocksr/status"
 
 local server_table = {}
 uci:foreach(shadowsocksr, "servers", function(s)
@@ -43,6 +40,18 @@ o:value("", translate("Disable"))
 o:value("same", translate("Same as Global Server"))
 for _,key in pairs(key_table) do o:value(key,server_table[key]) end
 
+o = s:option(ListValue, "netflix_server", translate("Netflix Node"))
+o:value("nil", translate("Disable"))
+o:value("same", translate("Same as Global Server"))
+for _,key in pairs(key_table) do o:value(key,server_table[key]) end
+o.default = "nil"
+o.rmempty = false
+
+o = s:option(Flag, "netflix_proxy", translate("External Proxy Mode"))
+o.rmempty = false
+o.description = translate("Forward Netflix Proxy through Main Proxy")
+o.default="0"
+
 o = s:option(ListValue, "threads", translate("Multi Threads Option"))
 o:value("0", translate("Auto Threads"))
 o:value("1", translate("1 Thread"))
@@ -70,9 +79,7 @@ o.default = 1
 
 o = s:option(ListValue, "pdnsd_enable", translate("Resolve Dns Mode"))
 o:value("1", translate("Use Pdnsd tcp query and cache"))
-if nixio.fs.access("/usr/bin/dns2socks") then
 o:value("2", translate("Use DNS2SOCKS query and cache"))
-end
 o:value("0", translate("Use Local DNS Service listen port 5335"))
 o.default = 1
 
@@ -95,3 +102,5 @@ o:depends("pdnsd_enable", "2")
 o.description = translate("Custom DNS Server format as IP:PORT (default: 8.8.4.4:53)")
 
 return m
+
+
